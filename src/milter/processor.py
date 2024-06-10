@@ -240,7 +240,6 @@ async def rewrite_reverse(
         return False
 
     logger.debug("Restoring From header to be the original from")
-    # Note, this is currently broken in releases <= 0.2.0
     await session.headers.delete(original_from_header)
     await session.headers.update(from_header, original_from_value.encode())
 
@@ -269,7 +268,7 @@ async def handle(session: Session) -> Union[Accept, Discard]:
             header_entry = {
                 "name": header.name,
                 "lower_name": header.name.lower(),
-                "value": header.value.tobytes().decode(),
+                "value": header.value.decode(),
             }
 
             if header_entry["lower_name"] == "from":
