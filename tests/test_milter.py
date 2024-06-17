@@ -253,6 +253,15 @@ class TestAddressHandling:
         )
         assert result == "someone@example.com"
 
+    def test_extract_parts(self):
+        """
+        Test that the mail parts are returned correctly from an email address.
+        """
+        assert (
+            src.milter.processor.extract_parts("someone+foo@example.com")
+            == ["someone+foo", "example.com"]
+        )
+
     def test_domain_extraction(self):
         """
         Test that the domain is returned correctly from an email address.

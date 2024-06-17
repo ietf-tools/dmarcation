@@ -151,14 +151,25 @@ def unquote_email_address(email_addr: str, percent_quote_char: str = "=") -> str
     return urllib.parse.unquote(email_addr.replace(percent_quote_char, "%"))
 
 
-def extract_domain(email_addr: str) -> Optional[str]:
+def extract_domain(email_addr: str) -> Union[str, bool]:
     """Extract the domain from an email address"""
-    return email_addr.split("@", 2)[1] if "@" in email_addr else False
+
+    (_, domain) = extract_parts(email_addr)
+
+    return domain or False
 
 
 def extract_localpart(email_addr: str) -> str:
     """Extract the localpart from an email address"""
-    return email_addr.split("@", 2)[0] if "@" in email_addr else email_addr
+
+    (localpart, _) = extract_parts(email_addr)
+
+    return localpart if localpart else email_addr
+
+
+def extract_parts(email_addr: str) -> list[Optional[str], Optional[str]]:
+    """Split up the email address"""
+    return email_addr.split("@", 2) if "@" in email_addr else [None, None]
 
 
 async def rewrite_forward(
