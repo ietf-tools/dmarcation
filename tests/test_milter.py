@@ -233,9 +233,52 @@ class TestAddressHandling:
         Tests that the address rewriting is reversed correctly with an alternative quote.
         """
         result = src.milter.processor.unrewrite_email_address(
-            ("Some One", "someone~40example.com@dmarc.example.com"), "~"
+            ("Some One", "someone~40example.com@dmarc.example.com"), None, "~"
         )
         assert result == "Some One <someone@example.com>"
+
+    def test_address_rewriting_with_correct_domain_is_reversed(self):
+        """
+        Tests that the address rewriting is reversed correctly if the matching
+        domain is provided.
+        """
+        result = src.milter.processor.unrewrite_email_address(
+            ("Some One", "someone=40example.com@dmarc.example.com"),
+            "dmarc.example.com"
+        )
+        assert result == "Some One <someone@example.com>"
+
+    def test_address_rewriting_with_alt_quote_and_correct_domain_is_reversed(self):
+        """
+        Tests that the address rewriting is reversed correctly with an alternative quote
+        if the matching domain is provided.
+        """
+        result = src.milter.processor.unrewrite_email_address(
+            ("Some One", "someone~40example.com@dmarc.example.com"),
+            "dmarc.example.com",
+            "~"
+        )
+        assert result == "Some One <someone@example.com>"
+
+    def test_address_rewriting_with_incorrect_domain_is_not_reversed(self):
+        """
+        Tests that the address rewriting is not reversed if the domain does not match.
+        """
+        result = src.milter.processor.unrewrite_email_address(
+            ("Some One", "someone=40example.com@dmarc.example.com"),
+            "example.com"
+        )
+        assert result == "Some One <someone=40example.com@dmarc.example.com>"
+
+    def test_address_rewriting_with_alt_quote_and_incorrect_domain_is_not_reversed(self):
+        """
+        Tests that the address rewriting is not reversed with an alternative quote if
+        the domain does not match.
+        """
+        result = src.milter.processor.unrewrite_email_address(
+            ("Some One", "someone~40example.com@dmarc.example.com"), "example.com", "~"
+        )
+        assert result == "Some One <someone~40example.com@dmarc.example.com>"
 
     def test_address_unquoting(self):
         """

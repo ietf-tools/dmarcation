@@ -119,14 +119,24 @@ def rewrite_email_address(
     return str(address)
 
 
-def unrewrite_email_address(email: tuple[str, str], quote_char: str = "=") -> str:
+def unrewrite_email_address(email: tuple[str, str], cloak_domain: Optional[str] = None, quote_char: str = "=") -> str:
     """
     Reverses the rewrite used to cloak the email addresses in the forward direction.
 
+    If the cloak domain is provided then the rewrite will only occur if it matches.
+    
     The return is a simple string.
     """
-    unquoted_address = unquote_email_address(extract_localpart(email[1]), quote_char)
-    address = Address(email[0], addr_spec=unquoted_address)
+
+    (localpart, domain) = extract_parts(email[1])
+
+    if cloak_domain and domain != cloak_domain:
+        replacement_address = email[1]
+
+    else:
+        replacement_address = unquote_email_address(localpart, quote_char)
+
+    address = Address(email[0], addr_spec=replacement_address)
 
     return str(address)
 
