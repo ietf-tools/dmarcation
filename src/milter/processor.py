@@ -243,26 +243,44 @@ async def rewrite_forward(
 
 
 async def rewrite_reverse(
-    session: Session,
-    from_header: Header,
-    original_from_header: Header,
-    original_from_value,
+    session: Session, from_header: Header, from_value: str
 ) -> bool:
     """
     Performs the reverse DMARC rewrite
 
-    This means taking the `X-Original-From` address(es) and then replacing the From
-    with the decoded versions.
+    This means reversing the encoding of the address and replacing the header.
 
     Returns True on success, or False otherwise.
     """
-    if not original_from_header or not original_from_value:
-        logger.debug("Invalid original from header detected.")
+    header_from_addresses = [address for address in getaddresses([from_value])]
+
+    replacement_addresses = [
+        unrewrite_email_address(
+            email,
+            get_config_value(services["app_config"], "domain"),
+            get_config_value(services["app_config"], "rewrite.quote_char", "="),
+        )
+        for email in header_from_addresses
+    ]
+
+    replacement_from = " " + ", ".join(replacement_addresses)
+
+    if replacement_from == from_value:
+        logger.debug(
+            "Skipping replacing the From: header because the values are the same."
+        )
+
         return False
 
-    logger.debug("Restoring From header to be the original from")
-    await session.headers.delete(original_from_header)
-    await session.headers.update(from_header, original_from_value.encode())
+    logger.debug(
+        "Replacing Original From: %(header_from)s With: %(replacement_from)s",
+        {
+            "header_from": from_value,
+            "replacement_from": replacement_from,
+        },
+    )
+
+    await session.headers.update(from_header, replacement_from.encode())
 
     return True
 
@@ -319,7 +337,7 @@ async def handle(session: Session) -> Union[Accept, Discard]:
     ):
         # Time to reverse the rewriting
         await rewrite_reverse(
-            session, from_header, original_from_header, original_from_value
+            session, from_header, from_value
         )
 
     elif get_config_value(services["app_config"], "rewrite.forward", True):
