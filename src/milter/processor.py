@@ -316,7 +316,6 @@ async def handle(session: Session) -> Union[Accept, Discard]:
 
             elif header_entry["lower_name"] == "x-original-from":
                 original_from_header = header
-                original_from_value = header_entry["value"]
 
             mail_headers.append(header_entry)
 
